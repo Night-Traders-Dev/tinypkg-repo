@@ -2,14 +2,14 @@
 #define TINYPKG_H
 
 #include <stdbool.h>
+#include <limits.h>
 
-#define MAX_PATH 4096
-
-extern char TINYPKG_DIR[MAX_PATH];
-extern char CACHE_DIR[MAX_PATH];
-extern char BUILD_DIR[MAX_PATH];
-extern char INSTALLED_DIR[MAX_PATH];
-extern char PREFIX[MAX_PATH];
+/* Use PATH_MAX for buffer sizes */
+extern char TINYPKG_DIR[PATH_MAX];
+extern char CACHE_DIR[PATH_MAX];
+extern char BUILD_DIR[PATH_MAX];
+extern char INSTALLED_DIR[PATH_MAX];
+extern char PREFIX_DIR[PATH_MAX];
 
 typedef struct {
     char name[64];
@@ -23,7 +23,7 @@ typedef struct {
 
 int load_config(void);
 void init_tinypkg();
-void update_repo();
+int repo_update(void);
 int load_manifest(const char *pkg, Package *p);
 
 void download(const char *url, const char *out);

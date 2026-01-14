@@ -14,9 +14,13 @@ int install_package(const char *pkg)
         return -1;
     }
 
-    path_join(dir, sizeof(dir), BUILD_DIR, pkg);
+    if (path_join(dir, sizeof(dir), BUILD_DIR, pkg) != 0) return -1;
 
-    return run_cmd("cd '%s'/* && %s", dir, p.install);
+    char child[PATH_MAX];
+    if (find_first_subdir(dir, child, sizeof(child)) != 0) return -1;
+    char escchild[PATH_MAX*2];
+    shell_escape(child, escchild, sizeof(escchild));
+    return run_cmd("cd %s && %s", escchild, p.install);
 }
 
 int remove_package(const char *pkg) {

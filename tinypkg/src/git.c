@@ -12,9 +12,11 @@ int repo_update(void) {
         return 1;
     }
 
+    char esc[PATH_MAX*2];
+    shell_escape(repo, esc, sizeof(esc));
     if (access(repo, F_OK) != 0) {
-        return run_cmd("git clone https://github.com/Night-Traders-Dev/tinypkg-repo %s", repo);
+        return run_cmd("git clone https://github.com/Night-Traders-Dev/tinypkg-repo %s", esc);
     } else {
-        return run_cmd("cd %s && git pull", repo);
+        return run_cmd("cd %s && git pull", esc);
     }
 }
