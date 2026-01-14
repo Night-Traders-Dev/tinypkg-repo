@@ -1,0 +1,27 @@
+name: vim
+version: 9.0.1234
+description: Highly configurable text editor
+author: Bram Moolenaar
+license: Vim License
+architecture: aarch64
+os: linux
+depends:
+  - ncurses
+  - libc
+
+source: https://github.com/vim/vim/archive/refs/tags/v9.0.1234.tar.gz
+
+build: |
+  cd vim-9.0.1234/src
+  ./configure \
+    --prefix=$PREFIX \
+    --with-features=huge \
+    --enable-gui=no \
+    --enable-multibyte
+  make -j$(nproc)
+
+install: |
+  cd vim-9.0.1234/src
+  make install PREFIX=$PREFIX
+
+checksum: sha256:abc123def456...

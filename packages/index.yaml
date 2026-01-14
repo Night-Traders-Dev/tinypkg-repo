@@ -1,0 +1,10 @@
+packages:
+  vim:
+    version: 9.0.1234
+    description: Text editor
+  neovim:
+    version: 0.9.0
+    description: Modern vim fork
+  tmux:
+    version: 3.3
+    description: Terminal multiplexer
