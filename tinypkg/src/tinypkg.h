@@ -29,7 +29,7 @@ int load_manifest(const char *pkg, Package *p);
 void download(const char *url, const char *out);
 void run(const char *cmd, const char *dir);
 
-void build_package(const char *pkg);
-void install_package(const char *pkg);
+int build_package(const char *pkg);
+int install_package(const char *pkg);
 
 #endif

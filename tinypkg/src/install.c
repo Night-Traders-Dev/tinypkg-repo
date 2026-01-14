@@ -1,11 +1,22 @@
+// src/install.c
 #include "install.h"
 #include "config.h"
 #include "util.h"
+#include "yaml.h"
+#include "tinypkg.h"
 
-int install_package(const char *pkg) {
+int install_package(const char *pkg)
+{
+    Package p;
     char dir[4096];
+
+    if (load_manifest(pkg, &p) != 0) {
+        return -1;
+    }
+
     path_join(dir, sizeof(dir), BUILD_DIR, pkg);
-    return run_cmd("cd %s/* && make install", dir);
+
+    return run_cmd("cd '%s'/* && %s", dir, p.install);
 }
 
 int remove_package(const char *pkg) {
