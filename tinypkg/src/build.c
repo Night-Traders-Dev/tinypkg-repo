@@ -38,15 +38,8 @@ int build_package(const char *pkg)
             return -1;
     }
 
-    /* Find extracted subdirectory and run build script from manifest */
-    {
-        char child[PATH_MAX];
-        if (find_first_subdir(dir, child, sizeof(child)) != 0) return -1;
-        char escchild[PATH_MAX*2];
-        shell_escape(child, escchild, sizeof(escchild));
-        if (run_cmd("cd %s && %s", escchild, p.build) != 0)
-            return -1;
-    }
+    /* Run build script from the build directory (manifest may `cd` into extracted subdir) */
+    if (run_script_block(p.build, dir, PREFIX_DIR) != 0) return -1;
 
     return 0;
 }

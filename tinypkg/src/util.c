@@ -7,6 +7,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 int run_cmd(const char *fmt, ...) {
     char cmd[8192];
@@ -99,4 +102,46 @@ int find_first_subdir(const char *dir, char *out, size_t max) {
     }
     closedir(d);
     return found;
+}
+
+/* Write `block` to a temporary script, set PREFIX env var inside it, run it from
+ * `workdir`, then remove the temp file. Returns script exit status (0 on success).
+ */
+int run_script_block(const char *block, const char *workdir, const char *prefix) {
+    char tmpl[] = "/tmp/tinypkg-script-XXXXXX";
+    int fd = mkstemp(tmpl);
+    if (fd < 0) return 1;
+    FILE *f = fdopen(fd, "w");
+    if (!f) { close(fd); unlink(tmpl); return 1; }
+
+    char esc_prefix[PATH_MAX*2];
+    shell_escape(prefix ? prefix : "", esc_prefix, sizeof(esc_prefix));
+
+    fprintf(f, "#!/bin/sh\nset -e\nexport PREFIX=%s\n", esc_prefix);
+    fprintf(f, "%s\n", block);
+    fflush(f);
+    fclose(f);
+    if (chmod(tmpl, 0700) != 0) { unlink(tmpl); return 1; }
+
+    char esc_work[PATH_MAX*2];
+    char esc_script[PATH_MAX*2];
+    shell_escape(workdir ? workdir : ".", esc_work, sizeof(esc_work));
+    shell_escape(tmpl, esc_script, sizeof(esc_script));
+
+    char logpath[PATH_MAX];
+    if (path_join(logpath, sizeof(logpath), workdir, "tinypkg.log") != 0) {
+        /* fallback: run without log */
+        int rc = run_cmd("cd %s && sh %s", esc_work, esc_script);
+        unlink(tmpl);
+        return rc;
+    }
+    char esc_log[PATH_MAX*2];
+    shell_escape(logpath, esc_log, sizeof(esc_log));
+
+    int rc = run_cmd("cd %s && sh %s > %s 2>&1", esc_work, esc_script, esc_log);
+    if (rc != 0) {
+        run_cmd("echo '--- last 50 lines of %s ---' && tail -n 50 %s", esc_log, esc_log);
+    }
+    unlink(tmpl);
+    return rc;
 }

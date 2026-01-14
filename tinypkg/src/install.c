@@ -16,11 +16,8 @@ int install_package(const char *pkg)
 
     if (path_join(dir, sizeof(dir), BUILD_DIR, pkg) != 0) return -1;
 
-    char child[PATH_MAX];
-    if (find_first_subdir(dir, child, sizeof(child)) != 0) return -1;
-    char escchild[PATH_MAX*2];
-    shell_escape(child, escchild, sizeof(escchild));
-    return run_cmd("cd %s && %s", escchild, p.install);
+    /* Run install block from the build dir; manifest typically `cd` into the source dir */
+    return run_script_block(p.install, dir, PREFIX_DIR);
 }
 
 int remove_package(const char *pkg) {

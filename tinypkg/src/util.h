@@ -9,3 +9,4 @@ int ensure_dir(const char *path);
 int run_cmd(const char *fmt, ...);
 void shell_escape(const char *in, char *out, size_t max);
 int find_first_subdir(const char *dir, char *out, size_t max);
+int run_script_block(const char *block, const char *workdir, const char *prefix);
