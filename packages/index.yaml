@@ -3,7 +3,7 @@ version: 1
 packages:
   vim:
     description: The ubiquitous text editor
-    latest: 9.0.1234
+    latest: 9.1.2085
     
   neovim:
     description: Modern, extensible editor
