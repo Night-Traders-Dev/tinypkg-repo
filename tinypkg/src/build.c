@@ -291,7 +291,7 @@ int execute_build(const char *name, struct manifest *m) {
         return -1;
     }
 
-    printf("✓ Build complete: %s/.cache/tinypkg/bin/%s\n", home, name);
+    printf("✓ Build complete: %s/.cache/tinypkg/bin/%s\n", prefix, name);
     return 0;
 }
 

@@ -3,70 +3,68 @@
  * 
  * Reads from cached repository data (~/.cache/tinypkg/)
  * Performs searches and displays package metadata
+ * 
+ * IMPROVEMENTS:
+ * - Centralized path management via common.c
+ * - Input validation
+ * - Better error messages
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <sys/stat.h>
+#include "common.h"
 #include "util.h"
 
-#define CACHE_DIR ".cache/tinypkg"
-
-/* Get cache path */
-static char* get_cache_path(void) {
-    static char path[512];
-    const char *home = getenv("HOME");
-    if (!home)
-        home = ".";
-    snprintf(path, sizeof(path), "%s/%s", home, CACHE_DIR);
-    return path;
-}
-
 /* Convert string to lowercase for case-insensitive search */
-static char* strlower(const char *str) {
-    static char buf[256];
+static char* strlower(char *dest, size_t dest_size, const char *str) {
+    if (!dest || !str || dest_size == 0) return NULL;
+    
     int i = 0;
-    while (str[i] && i < 255) {
-        buf[i] = tolower(str[i]);
+    while (str[i] && i < (int)dest_size - 1) {
+        dest[i] = tolower((unsigned char)str[i]);
         i++;
     }
-    buf[i] = '\0';
-    return buf;
+    dest[i] = '\0';
+    return dest;
 }
 
 /* Search for packages matching term (case-insensitive) */
 int util_search(const char *term) {
     char *cache = get_cache_path();
-    char index_path[512];
+    char index_path[PATH_MAX_LEN];
     FILE *f;
-    char line[256];
+    char line[LINE_MAX_LEN];
     char term_lower[128];
     int found = 0;
+    struct stat st;
     
     if (!term || !term[0]) {
-        printf("Error: search term required\n");
-        return -1;
+        log_error("util_search", "Search term required");
+        return TINYPKG_ERR;
     }
     
-    snprintf(index_path, sizeof(index_path), "%s/index.yaml", cache);
+    if (!cache) {
+        log_error("util_search", "Failed to get cache path");
+        return TINYPKG_ERR;
+    }
+    
+    snprintf(index_path, PATH_MAX_LEN, "%s/index.yaml", cache);
     
     /* Check if cache exists */
-    struct stat st;
     if (stat(index_path, &st) != 0) {
-        printf("Error: Repository not synced. Run 'tinypkg repo sync' first\n");
-        return -1;
+        log_error("util_search", "Repository not synced - run 'tinypkg repo sync' first");
+        return TINYPKG_ERR;
     }
     
     f = fopen(index_path, "r");
     if (!f) {
-        printf("Error: Could not open index at %s\n", index_path);
-        return -1;
+        log_error("util_search", "Could not open index");
+        return TINYPKG_ERR;
     }
     
-    strncpy(term_lower, strlower(term), sizeof(term_lower) - 1);
+    if (!strlower(term_lower, sizeof(term_lower), term)) {
+        log_error("util_search", "Search term too long");
+        fclose(f);
+        return TINYPKG_ERR;
+    }
     
     printf("Searching for '%s'...\n\n", term);
     
@@ -75,36 +73,38 @@ int util_search(const char *term) {
         char *p = line;
         
         /* Skip leading whitespace */
-        while (*p && (*p == ' ' || *p == '\t'))
-            p++;
+        while (*p && (*p == ' ' || *p == '\t')) p++;
         
         if (!in_packages && strncmp(p, "packages:", 9) == 0) {
             in_packages = 1;
             continue;
         }
         
-        if (!in_packages)
-            continue;
+        if (!in_packages) continue;
         
         /* Check for package name (2-space indent, followed by colon) */
-        if (line[0] == ' ' && line[1] == ' ' && line[2] != ' ') {
+        if (line[0] == ' ' && line[1] == ' ' && line[2] != ' ' && line[2] != '\0') {
             char name[128] = {0};
             char version[64] = {0};
             char desc[256] = {0};
+            char name_lower[128];
             
             if (sscanf(line + 2, "%127[^:]:", name) == 1) {
-                char name_lower[128];
-                strncpy(name_lower, strlower(name), sizeof(name_lower) - 1);
+                if (!strlower(name_lower, sizeof(name_lower), name)) {
+                    continue;
+                }
                 
                 /* Read following lines for version and description */
-                char next_line[256];
+                char next_line[LINE_MAX_LEN];
                 while (fgets(next_line, sizeof(next_line), f)) {
-                    if (next_line[0] != ' ' || next_line[1] != ' ' || next_line[2] == ' ')
+                    if (next_line[0] != ' ' || next_line[1] != ' ' || next_line[2] == ' ') {
                         break;
+                    }
                     
                     if (strstr(next_line, "version:")) {
                         sscanf(next_line, "%*[^:]:%*[ ]%63s", version);
                     }
+                    
                     if (strstr(next_line, "description:")) {
                         sscanf(next_line, "%*[^:]:%*[ ]%255[^\n]", desc);
                     }
@@ -112,9 +112,10 @@ int util_search(const char *term) {
                 
                 /* Check if name or description matches search term */
                 if (strstr(name_lower, term_lower) || strstr(desc, term)) {
-                    printf("  %s (%s)\n", name, version[0] ? version : "unknown");
-                    if (desc[0])
-                        printf("    %s\n", desc);
+                    printf(" %s (%s)\n", name, version[0] ? version : "unknown");
+                    if (desc[0]) {
+                        printf(" %s\n", desc);
+                    }
                     printf("\n");
                     found++;
                 }
@@ -124,33 +125,51 @@ int util_search(const char *term) {
     
     fclose(f);
     
-    if (found == 0)
+    if (found == 0) {
         printf("No packages found matching '%s'\n", term);
-    else
+        return TINYPKG_ERR;
+    } else {
         printf("Found %d package(s)\n", found);
-    
-    return found > 0 ? 0 : -1;
+        return TINYPKG_OK;
+    }
 }
 
 /* Display detailed information about a package */
 int util_info(const char *name) {
     char *cache = get_cache_path();
-    char manifest_path[512];
+    char manifest_path[PATH_MAX_LEN];
     FILE *f;
-    char line[512];
+    char line[LINE_MAX_LEN];
+    struct stat st;
     
     if (!name || !name[0]) {
-        printf("Error: package name required\n");
-        return -1;
+        log_error("util_info", "Package name required");
+        return TINYPKG_ERR;
     }
     
-    snprintf(manifest_path, sizeof(manifest_path), "%s/repo/packages/%s/manifest.yaml", cache, name);
+    if (!is_valid_package_name(name)) {
+        log_error("util_info", "Invalid package name");
+        return TINYPKG_ERR;
+    }
+    
+    if (!cache) {
+        log_error("util_info", "Failed to get cache path");
+        return TINYPKG_ERR;
+    }
+    
+    snprintf(manifest_path, PATH_MAX_LEN, "%s/repo/packages/%s/manifest.yaml", 
+             cache, name);
+    
+    /* Check if file exists first to avoid race condition */
+    if (stat(manifest_path, &st) != 0) {
+        log_error("util_info", "Package not found");
+        return TINYPKG_NOT_FOUND;
+    }
     
     f = fopen(manifest_path, "r");
     if (!f) {
-        printf("Error: Package '%s' not found\n", name);
-        printf("(Looked in %s)\n", manifest_path);
-        return -1;
+        log_error("util_info", "Could not open manifest");
+        return TINYPKG_ERR;
     }
     
     printf("\n=== Package Information: %s ===\n\n", name);
@@ -160,8 +179,9 @@ int util_info(const char *name) {
         line[strcspn(line, "\n")] = 0;
         
         /* Skip empty lines and comment lines */
-        if (line[0] == '\0' || line[0] == '#')
+        if (line[0] == '\0' || line[0] == '#') {
             continue;
+        }
         
         /* Format output */
         if (strstr(line, ":")) {
@@ -174,29 +194,34 @@ int util_info(const char *name) {
     fclose(f);
     printf("\n");
     
-    return 0;
+    return TINYPKG_OK;
 }
 
 /* List all available packages */
 int util_list(void) {
     char *cache = get_cache_path();
-    char index_path[512];
+    char index_path[PATH_MAX_LEN];
     FILE *f;
-    char line[256];
+    char line[LINE_MAX_LEN];
+    struct stat st;
     
-    snprintf(index_path, sizeof(index_path), "%s/index.yaml", cache);
+    if (!cache) {
+        log_error("util_list", "Failed to get cache path");
+        return TINYPKG_ERR;
+    }
+    
+    snprintf(index_path, PATH_MAX_LEN, "%s/index.yaml", cache);
     
     /* Check if cache exists */
-    struct stat st;
     if (stat(index_path, &st) != 0) {
-        printf("Error: Repository not synced. Run 'tinypkg repo sync' first\n");
-        return -1;
+        log_error("util_list", "Repository not synced - run 'tinypkg repo sync' first");
+        return TINYPKG_ERR;
     }
     
     f = fopen(index_path, "r");
     if (!f) {
-        printf("Error: Could not open index\n");
-        return -1;
+        log_error("util_list", "Could not open index");
+        return TINYPKG_ERR;
     }
     
     printf("\nAvailable Packages:\n");
@@ -211,27 +236,29 @@ int util_list(void) {
             continue;
         }
         
-        if (!in_packages)
-            continue;
+        if (!in_packages) continue;
         
         /* Package entries: 2-space indent, name followed by colon */
-        if (line[0] == ' ' && line[1] == ' ' && line[2] != ' ') {
+        if (line[0] == ' ' && line[1] == ' ' && line[2] != ' ' && line[2] != '\0') {
             char name[128] = {0};
             char version[64] = {0};
             
             if (sscanf(line + 2, "%127[^:]:", name) == 1) {
                 /* Try to get version from next lines */
-                char next_line[256];
+                char next_line[LINE_MAX_LEN];
+                
                 while (fgets(next_line, sizeof(next_line), f)) {
-                    if (next_line[0] != ' ' || next_line[1] != ' ' || next_line[2] == ' ')
+                    if (next_line[0] != ' ' || next_line[1] != ' ' || next_line[2] == ' ') {
                         break;
+                    }
+                    
                     if (strstr(next_line, "version:")) {
                         sscanf(next_line, "%*[^:]:%*[ ]%63s", version);
                         break;
                     }
                 }
                 
-                printf("  %-20s %s\n", name, version[0] ? version : "unknown");
+                printf(" %-20s %s\n", name, version[0] ? version : "unknown");
                 count++;
             }
         }
@@ -242,5 +269,5 @@ int util_list(void) {
     printf("\n===================\n");
     printf("Total: %d packages\n\n", count);
     
-    return 0;
+    return TINYPKG_OK;
 }
