@@ -14,5 +14,7 @@ int repo_remove(const char *name);/* Remove repository source */
 int repo_clone_or_pull(void);     /* Clone or update git repo */
 int repo_parse_index(void);       /* Parse packages/index.yaml */
 int repo_cache_packages(void);    /* Cache package data locally */
+extern char* get_cache_path(void);
+
 
 #endif

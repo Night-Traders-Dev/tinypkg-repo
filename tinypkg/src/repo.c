@@ -11,13 +11,13 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include "repo.h"
 
 #define REPO_URL "https://github.com/Night-Traders-Dev/tinypkg-repo.git"
 #define CACHE_DIR ".cache/tinypkg"
 
+
 /* Get home directory and build cache path */
-static char* get_cache_path(void) {
+char* get_cache_path(void) {
     static char path[512];
     const char *home = getenv("HOME");
     if (!home)
