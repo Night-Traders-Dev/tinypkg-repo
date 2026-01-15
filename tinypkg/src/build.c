@@ -23,6 +23,8 @@
 #include "util.h"
 #include "repo.h"
 
+/* Forward declarations for util.c functions we'll use */
+extern char* get_cache_path(void);
 
 /* ============================================================================
  * Helper Functions - Path Management
@@ -67,6 +69,34 @@ static char* get_tinypkg_dir(void) {
     if (!home) return NULL;
     snprintf(path, sizeof(path), "%s/.tinypkg", home);
     return path;
+}
+
+/* Create directory and parents (like mkdir -p) */
+static int mkdir_p(const char *path) {
+    char tmp[1024];
+    char *p = NULL;
+    
+    strncpy(tmp, path, sizeof(tmp) - 1);
+    tmp[sizeof(tmp) - 1] = '\0';
+    
+    for (p = tmp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = '\0';
+            if (mkdir(tmp, 0755) != 0 && errno != EEXIST) {
+                perror("mkdir");
+                return -1;
+            }
+            *p = '/';
+        }
+    }
+    
+    /* Create final directory */
+    if (mkdir(tmp, 0755) != 0 && errno != EEXIST) {
+        perror("mkdir");
+        return -1;
+    }
+    
+    return 0;
 }
 
 /* ============================================================================
@@ -169,9 +199,9 @@ int download_source(const char *name, const char *url) {
 
     snprintf(pkg_dir, sizeof(pkg_dir), "%s/%s", build_base, name);
 
-    /* Create package directory */
-    if (mkdir(pkg_dir, 0755) != 0 && errno != EEXIST) {
-        perror("mkdir");
+    /* Create package directory with parent directories */
+    if (mkdir_p(pkg_dir) != 0) {
+        fprintf(stderr, "Error: Failed to create build directory\n");
         return -1;
     }
 
@@ -239,8 +269,11 @@ int execute_build(const char *name, struct manifest *m) {
     snprintf(pkg_dir, sizeof(pkg_dir), "%s/%s", build_base, name);
     snprintf(prefix, sizeof(prefix), "%s/tinypkg-build/%s/PKG", home, name);
 
-    /* Create PKG (installation prefix) directory */
-    mkdir(prefix, 0755);
+    /* Create PKG (installation prefix) directory with parents */
+    if (mkdir_p(prefix) != 0) {
+        fprintf(stderr, "Error: Failed to create prefix directory\n");
+        return -1;
+    }
 
     printf("Building %s...\n", name);
 
@@ -286,7 +319,10 @@ int execute_install(const char *name) {
     }
 
     /* Create ~/.local/bin if it doesn't exist */
-    mkdir(local_bin, 0755);
+    if (mkdir_p(local_bin) != 0) {
+        fprintf(stderr, "Error: Failed to create local bin directory\n");
+        return -1;
+    }
 
     printf("Installing %s to %s...\n", name, install_bin);
 
@@ -322,7 +358,10 @@ int track_installation(const char *name, const char *version) {
     if (!tinypkg_dir) return -1;
 
     /* Create ~/.tinypkg if needed */
-    mkdir(tinypkg_dir, 0755);
+    if (mkdir_p(tinypkg_dir) != 0) {
+        fprintf(stderr, "Error: Failed to create tinypkg directory\n");
+        return -1;
+    }
 
     snprintf(db_path, sizeof(db_path), "%s/installed.db", tinypkg_dir);
 
