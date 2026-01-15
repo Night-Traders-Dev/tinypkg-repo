@@ -1,13 +1,13 @@
 /*
- * util.h - Package utilities (search, display, info)
+ * util.h - Utilities for searching and displaying package information
  */
 
 #ifndef UTIL_H
 #define UTIL_H
 
-/* Utility functions */
+/* Search and info utilities */
 int util_search(const char *term);    /* Search for packages */
-int util_info(const char *name);      /* Display package info */
+int util_info(const char *name);      /* Display package details */
 int util_list(void);                  /* List all packages */
 
 #endif
