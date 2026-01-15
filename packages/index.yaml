@@ -1,10 +1,42 @@
+version: 1
+
 packages:
   vim:
-    version: 9.0.1234
-    description: Text editor
+    description: The ubiquitous text editor
+    latest: 9.0.1234
+    
   neovim:
-    version: 0.9.0
-    description: Modern vim fork
+    description: Modern, extensible editor
+    latest: 0.9.4
+    
   tmux:
-    version: 3.3
     description: Terminal multiplexer
+    latest: 3.3a
+    
+  git:
+    description: Version control system
+    latest: 2.42.0
+    
+  zsh:
+    description: Advanced shell with scripting
+    latest: 5.9
+    
+  ripgrep:
+    description: Fast recursive search tool (rust)
+    latest: 13.0.0
+    
+  fzf:
+    description: Fuzzy finder for CLI
+    latest: 0.45.0
+    
+  htop:
+    description: Interactive process monitor
+    latest: 3.2.2
+    
+  bat:
+    description: Cat clone with syntax highlighting
+    latest: 0.24.0
+    
+  exa:
+    description: Modern replacement for ls command
+    latest: 0.10.1

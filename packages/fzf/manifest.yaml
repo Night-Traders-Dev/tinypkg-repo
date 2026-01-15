@@ -1,0 +1,12 @@
+name: fzf
+version: 0.45.0
+source: https://github.com/junegunn/fzf/archive/refs/tags/0.45.0.tar.gz
+
+build: |
+  cd fzf-0.45.0
+  ./install --bin
+  
+install: |
+  cd fzf-0.45.0
+  mkdir -p $PREFIX/bin
+  cp bin/fzf $PREFIX/bin/

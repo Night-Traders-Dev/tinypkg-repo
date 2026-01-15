@@ -1,0 +1,12 @@
+name: zsh
+version: 5.9
+source: https://sourceforge.net/projects/zsh/files/zsh/5.9/zsh-5.9.tar.xz/download
+
+build: |
+  cd zsh-5.9
+  ./configure --prefix=$PREFIX
+  make -j8
+  
+install: |
+  cd zsh-5.9
+  make install

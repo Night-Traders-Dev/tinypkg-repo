@@ -1,0 +1,13 @@
+name: htop
+version: 3.2.2
+source: https://github.com/htop-dev/htop/archive/refs/tags/3.2.2.tar.gz
+
+build: |
+  cd htop-3.2.2
+  ./autogen.sh
+  ./configure --prefix=$PREFIX
+  make -j8
+  
+install: |
+  cd htop-3.2.2
+  make install

@@ -1,0 +1,12 @@
+name: ripgrep
+version: 13.0.0
+source: https://github.com/BurntSushi/ripgrep/archive/refs/tags/13.0.0.tar.gz
+
+build: |
+  cd ripgrep-13.0.0
+  cargo build --release
+  
+install: |
+  cd ripgrep-13.0.0
+  mkdir -p $PREFIX/bin
+  cp target/release/rg $PREFIX/bin/

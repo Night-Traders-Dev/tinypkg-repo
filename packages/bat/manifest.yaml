@@ -1,0 +1,12 @@
+name: bat
+version: 0.24.0
+source: https://github.com/sharkdp/bat/archive/refs/tags/v0.24.0.tar.gz
+
+build: |
+  cd bat-0.24.0
+  cargo build --release
+  
+install: |
+  cd bat-0.24.0
+  mkdir -p $PREFIX/bin
+  cp target/release/bat $PREFIX/bin/

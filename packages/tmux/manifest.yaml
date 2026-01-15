@@ -1,0 +1,12 @@
+name: tmux
+version: 3.3a
+source: https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz
+
+build: |
+  cd tmux-3.3a
+  ./configure --prefix=$PREFIX
+  make -j8
+  
+install: |
+  cd tmux-3.3a
+  make install

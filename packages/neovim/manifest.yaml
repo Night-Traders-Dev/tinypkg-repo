@@ -1,0 +1,11 @@
+name: neovim
+version: 0.9.4
+source: https://github.com/neovim/neovim/archive/refs/tags/v0.9.4.tar.gz
+
+build: |
+  cd neovim-0.9.4
+  make CMAKE_BUILD_TYPE=Release
+  
+install: |
+  cd neovim-0.9.4
+  make install DESTDIR=$PREFIX

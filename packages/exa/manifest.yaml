@@ -1,0 +1,12 @@
+name: exa
+version: 0.10.1
+source: https://github.com/ogham/exa/archive/refs/tags/v0.10.1.tar.gz
+
+build: |
+  cd exa-0.10.1
+  cargo build --release
+  
+install: |
+  cd exa-0.10.1
+  mkdir -p $PREFIX/bin
+  cp target/release/exa $PREFIX/bin/
