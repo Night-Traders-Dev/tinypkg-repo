@@ -270,7 +270,7 @@ int execute_build(const char *name, struct manifest *m) {
     if (!build_base || !home) return -1;
 
     snprintf(pkg_dir, sizeof(pkg_dir), "%s/%s", build_base, name);
-    snprintf(prefix, sizeof(prefix), "%s/tinypkg-build/%s/PKG", home, name);
+    snprintf(prefix, sizeof(prefix), "%s/.cache/tinypkg/%s/PKG", home, name);
 
     /* Create PKG (installation prefix) directory with parents */
     if (mkdir_p(prefix) != 0) {
@@ -291,7 +291,7 @@ int execute_build(const char *name, struct manifest *m) {
         return -1;
     }
 
-    printf("✓ Build complete: %s/bin/%s\n", prefix, name);
+    printf("✓ Build complete: %s/.cache/tinypkg/bin/%s\n", home, name);
     return 0;
 }
 
