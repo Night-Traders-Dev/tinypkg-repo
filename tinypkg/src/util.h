@@ -1,12 +1,13 @@
-#pragma once
-#include <stddef.h>
+/*
+ * util.h - Package utilities (search, display, info)
+ */
 
-int path_join(char *out, size_t max, const char *a, const char *b);
-int path_join3(char *out, size_t max, const char *a, const char *b, const char *c);
-int path_join4(char *out, size_t max, const char *a, const char *b, const char *c, const char *d);
+#ifndef UTIL_H
+#define UTIL_H
 
-int ensure_dir(const char *path);
-int run_cmd(const char *fmt, ...);
-void shell_escape(const char *in, char *out, size_t max);
-int find_first_subdir(const char *dir, char *out, size_t max);
-int run_script_block(const char *block, const char *workdir, const char *prefix);
+/* Utility functions */
+int util_search(const char *term);    /* Search for packages */
+int util_info(const char *name);      /* Display package info */
+int util_list(void);                  /* List all packages */
+
+#endif
