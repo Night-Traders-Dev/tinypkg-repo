@@ -25,6 +25,9 @@
 
 /* Forward declarations for util.c functions we'll use */
 extern char* get_cache_path(void);
+#define BUILD_DIR ".cache/tinypkg/build"
+#define LOCAL_BIN_DIR ".local/bin"
+#define TINYPKG_DIR ".cache/tinypkg"
 
 /* ============================================================================
  * Helper Functions - Path Management
@@ -49,7 +52,7 @@ static char* get_build_dir(void) {
     static char path[1024];
     const char *home = get_home_dir();
     if (!home) return NULL;
-    snprintf(path, sizeof(path), "%s/tinypkg-build", home);
+    snprintf(path, sizeof(path), "%s/%s", home, BUILD_DIR);
     return path;
 }
 
@@ -58,7 +61,7 @@ static char* get_local_bin(void) {
     static char path[1024];
     const char *home = get_home_dir();
     if (!home) return NULL;
-    snprintf(path, sizeof(path), "%s/.local/bin", home);
+    snprintf(path, sizeof(path), "%s/%s", home , LOCAL_BIN_DIR);
     return path;
 }
 
@@ -67,7 +70,7 @@ static char* get_tinypkg_dir(void) {
     static char path[1024];
     const char *home = get_home_dir();
     if (!home) return NULL;
-    snprintf(path, sizeof(path), "%s/.tinypkg", home);
+    snprintf(path, sizeof(path), "%s/%s", home, TINYPKG_DIR);
     return path;
 }
 
