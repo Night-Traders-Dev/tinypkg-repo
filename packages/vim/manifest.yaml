@@ -1,5 +1,5 @@
 name: vim
-version: 9.0.1234
+version: 9.1.2085
 description: Highly configurable text editor
 author: Bram Moolenaar
 license: Vim License
@@ -9,10 +9,10 @@ depends:
   - ncurses
   - libc
 
-source: https://github.com/vim/vim/archive/refs/tags/v9.0.1234.tar.gz
+source: https://github.com/vim/vim/archive/refs/tags/v9.1.2085.tar.gz
 
 build: |
-  cd vim-9.0.1234/src
+  cd vim-9.1.2085/src
   ./configure \
     --prefix=$PREFIX \
     --with-features=huge \
@@ -21,7 +21,7 @@ build: |
   make -j$(nproc)
 
 install: |
-  cd vim-9.0.1234/src
+  cd vim-9.1.2085/src
   make install PREFIX=$PREFIX
 
 checksum: sha256:abc123def456...
